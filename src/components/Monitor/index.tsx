@@ -4,7 +4,7 @@ import { LineChart } from "echarts/charts";
 import { GridComponent } from "echarts/components";
 import * as echarts from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { HZ } from "@/renderer/constants";
 import { ALL_TOPICS } from "@/renderer/constants/topic";
@@ -23,7 +23,7 @@ const MonitorChart = (props: { fps: number }) => {
   const colorlist = useRef(["#52c41a", "#fa8c16", "#f5222d"]);
   const [chartStatus, setStatus] = useState(0);
 
-  const initChart = () => {
+  const initChart = useCallback(() => {
     chart.current = echarts.init(ref.current);
     chart.current.setOption({
       grid: {
@@ -57,42 +57,57 @@ const MonitorChart = (props: { fps: number }) => {
         }
       ]
     });
-  };
+  }, []);
 
-  const updateChart = (fps: number) => {
-    if (fps < 0) return;
-    if (chartData.current.length >= 20) chartData.current.shift();
-    chartData.current.push(fps);
+  const updateChart = useCallback(
+    (fps: number) => {
+      if (fps < 0) return;
+      if (chartData.current.length >= 20) chartData.current.shift();
+      chartData.current.push(fps);
 
-    let status = 0;
-    if (fps < HZ * 0.6) status = 2;
-    else if (fps < HZ * 0.8) status = 1;
-    if (status !== chartStatus) {
-      setStatus(status);
-    }
-    chart.current?.setOption({
-      series: [
-        {
-          data: chartData.current,
-          areaStyle: {
-            color: colorlist.current[status]
-          },
-          itemStyle: {
-            color: colorlist.current[status]
-          }
+      let status = 0;
+      if (fps < HZ * 0.6) status = 2;
+      else if (fps < HZ * 0.8) status = 1;
+      setStatus((prevStatus) => {
+        if (prevStatus !== status) {
+          return status;
         }
-      ]
-    });
-  };
+        return prevStatus;
+      });
+
+      chart.current?.setOption({
+        series: [
+          {
+            data: chartData.current,
+            areaStyle: {
+              color: colorlist.current[status]
+            },
+            itemStyle: {
+              color: colorlist.current[status]
+            }
+          }
+        ]
+      });
+    },
+    [chartStatus]
+  );
 
   useEffect(() => {
     initChart();
     return () => {
       chart.current?.dispose();
     };
-  }, []);
+  }, [initChart]);
 
-  if (chart.current) updateChart(props.fps);
+  useEffect(() => {
+    updateChart(props.fps);
+
+    const interval = setInterval(() => {
+      updateChart(props.fps);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [props.fps, updateChart]);
 
   return (
     <section className={classNames(styles["monitor-chart"])}>
