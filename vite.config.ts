@@ -69,8 +69,5 @@ export default defineConfig({
         cwd: "src/assets/model"
       })
     )
-  },
-  server: {
-    hmr: true
   }
 });
