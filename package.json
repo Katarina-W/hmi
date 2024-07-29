@@ -1,0 +1,70 @@
+{
+  "name": "react",
+  "version": "1.0.0",
+  "description": "react template",
+  "type": "module",
+  "scripts": {
+    "start": "vite",
+    "preview": "vite preview",
+    "build": "vite build",
+    "lint": "pnpm prettier && pnpm eslint && pnpm check",
+    "prettier": "prettier --ignore-path .eslintignore . --write",
+    "eslint": "eslint . --fix",
+    "check": "tsc --noEmit -p tsconfig.json",
+    "preinstall": "npx only-allow pnpm",
+    "postinstall": "simple-git-hooks"
+  },
+  "dependencies": {
+    "antd": "^5.19.3",
+    "echarts": "^5.5.1",
+    "eventemitter3": "^5.0.1",
+    "idb-keyval": "^6.2.1",
+    "lodash-es": "^4.17.21",
+    "mobx": "^6.13.0",
+    "mobx-react-lite": "^4.0.7",
+    "polyline-normals": "^2.0.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.25.0",
+    "three": "^0.167.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.3.0",
+    "@commitlint/config-conventional": "^19.2.2",
+    "@types/lodash-es": "^4.17.12",
+    "@types/node": "^20.14.11",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/three": "^0.167.0",
+    "@typescript-eslint/eslint-plugin": "^7.16.1",
+    "@typescript-eslint/parser": "^7.16.1",
+    "@vitejs/plugin-react": "^4.3.1",
+    "classnames": "^2.5.1",
+    "eslint": "^8.56.0",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "less": "^4.2.0",
+    "lint-staged": "^15.2.7",
+    "prettier": "^3.3.3",
+    "simple-git-hooks": "^2.11.1",
+    "typescript": "^5.5.3",
+    "vite": "^5.3.4"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "prettier": {
+    "trailingComma": "none"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "prettier --ignore-path .eslintignore --write",
+      "eslint --fix"
+    ]
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npx lint-staged",
+    "commit-msg": "npx --no -- commitlint --edit $1"
+  }
+}
