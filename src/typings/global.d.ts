@@ -2,6 +2,7 @@
 
 declare const __COMMITID__: string;
 declare const __BUILDTIME__: string;
+declare const __MODEL_DIRECTORY_HASH__: string;
 
 interface Memory {
   jsHeapSizeLimit: number;

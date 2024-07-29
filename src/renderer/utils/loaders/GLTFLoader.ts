@@ -1,4 +1,11 @@
-import { AnimationClip, Camera, Group, ObjectLoader } from "three";
+import {
+  AnimationClip,
+  AnimationClipJSON,
+  Camera,
+  Group,
+  Object3DJSON,
+  ObjectLoader
+} from "three";
 import {
   type GLTF,
   GLTFLoader as BASE_GLTFLoader
@@ -11,6 +18,15 @@ import {
 } from "../../constants";
 import createCache from "../cache";
 
+interface GLTFJSON {
+  animations: AnimationClipJSON[];
+  scene: Object3DJSON;
+  scenes: Object3DJSON[];
+  cameras: Object3DJSON[];
+  asset: GLTF["asset"];
+  userData: GLTF["userData"];
+}
+
 const loader = new ObjectLoader();
 
 const cache = createCache({
@@ -20,30 +36,26 @@ const cache = createCache({
 });
 
 // 序列化 GLTF 对象
-function serializeGLTF(gltf: GLTF) {
-  return {
-    animations: gltf.animations.map(AnimationClip.toJSON),
-    scene: gltf.scene.toJSON(),
-    scenes: gltf.scenes.map((scene) => scene.toJSON()),
-    cameras: gltf.cameras.map((camera) => camera.toJSON()),
-    asset: gltf.asset,
-    userData: gltf.userData
-  };
-}
+const serializeGLTF = (gltf: GLTF): GLTFJSON => ({
+  animations: gltf.animations.map(AnimationClip.toJSON),
+  scene: gltf.scene.toJSON(),
+  scenes: gltf.scenes.map((scene) => scene.toJSON()),
+  cameras: gltf.cameras.map((camera) => camera.toJSON()),
+  asset: gltf.asset,
+  userData: gltf.userData
+});
 
 // 反序列化 GLTF 对象
-function deserializeGLTF(gltf: GLTF) {
-  return {
-    animations: gltf.animations.map((animation) =>
-      AnimationClip.parse(AnimationClip.toJSON(animation))
-    ),
-    scene: loader.parse(gltf.scene) as Group,
-    scenes: gltf.scenes.map((scene) => loader.parse(scene) as Group),
-    cameras: gltf.cameras.map((camera) => loader.parse(camera) as Camera),
-    asset: gltf.asset,
-    userData: gltf.userData
-  };
-}
+const deserializeGLTF = (gltf: GLTFJSON): Omit<GLTF, "parser"> => ({
+  animations: gltf.animations.map((animation) =>
+    AnimationClip.parse(animation)
+  ),
+  scene: loader.parse(gltf.scene) as Group,
+  scenes: gltf.scenes.map((scene) => loader.parse(scene) as Group),
+  cameras: gltf.cameras.map((camera) => loader.parse(camera) as Camera),
+  asset: gltf.asset,
+  userData: gltf.userData
+});
 
 export default class GLTFLoader extends BASE_GLTFLoader {
   #retry = 0;
@@ -56,7 +68,7 @@ export default class GLTFLoader extends BASE_GLTFLoader {
     onError?: (err: unknown) => void
   ) {
     try {
-      const data = await cache.get<GLTF>(url);
+      const data = await cache.get<GLTFJSON>(url);
       if (data) {
         this.#retry = 0;
         this.manager.itemEnd(url);

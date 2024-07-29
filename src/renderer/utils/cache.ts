@@ -20,16 +20,20 @@ const createCache = (options: Options) => {
   const versionKey = "cache_version";
 
   let isChecked = false;
+  let currentVersion: IDBValidKey | undefined;
 
   const checkVersion = async () => {
     if (isChecked) return;
-    isChecked = true;
     try {
-      const currentVersion = await get<IDBValidKey>(versionKey);
-      if (currentVersion !== options.version) {
-        await clear();
-        await set(versionKey, options.version);
+      if (!currentVersion) {
+        currentVersion = await dbGet<IDBValidKey>(versionKey, store);
       }
+      if (currentVersion !== options.version) {
+        await dbClear(store);
+        currentVersion = options.version;
+        await dbSet(versionKey, options.version, store);
+      }
+      isChecked = true;
     } catch (error) {
       console.log(error);
     }
