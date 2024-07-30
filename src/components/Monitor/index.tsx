@@ -171,7 +171,7 @@ const MonitorPanel = (props: {
   );
 };
 
-export default (props: {
+const Monitor = (props: {
   fps: number;
   memory?: Memory;
   geometries?: number;
@@ -189,3 +189,5 @@ export default (props: {
     </section>
   );
 };
+
+export default Monitor;

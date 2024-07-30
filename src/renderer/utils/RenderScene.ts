@@ -1,11 +1,8 @@
-import { message } from "antd";
-import { MessageType } from "antd/es/message/interface";
 import EventEmitter from "eventemitter3";
 import { debounce } from "lodash-es";
 import {
   AmbientLight,
   AnimationMixer,
-  DefaultLoadingManager,
   HemisphereLight,
   PerspectiveCamera,
   Scene,
@@ -16,23 +13,6 @@ import { Timer } from "three/examples/jsm/misc/Timer.js";
 
 import type { ALL_RENDER_EVENT } from "../typings";
 import Stats from "./libs/Stats";
-
-// 监听3d场景绘制进度
-let hideThreeLoading: MessageType | null;
-DefaultLoadingManager.onStart = () => {
-  if (!hideThreeLoading) {
-    hideThreeLoading = message.info({
-      content: "3d场景加载中",
-      duration: 0
-    });
-  }
-};
-DefaultLoadingManager.onLoad = () => {
-  if (hideThreeLoading) {
-    hideThreeLoading();
-    hideThreeLoading = null;
-  }
-};
 
 export default abstract class Renderer<
   EventTypes extends EventEmitter.ValidEventTypes = ALL_RENDER_EVENT,

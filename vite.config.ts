@@ -37,8 +37,11 @@ const hashDirectory = (...args: Parameters<(typeof fg)["globSync"]>) => {
   const cwd = path.resolve(args[1]?.cwd || "");
   for (const file of files) {
     const filePath = path.join(cwd, file);
-    const fileBuffer = fs.readFileSync(filePath);
-    hash.update(fileBuffer);
+    const stats = fs.statSync(filePath);
+
+    hash.update(file);
+    hash.update(stats.mtimeMs.toString());
+    hash.update(stats.size.toString());
   }
 
   return hash.digest("hex");
