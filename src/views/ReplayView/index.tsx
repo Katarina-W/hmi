@@ -6,9 +6,6 @@ import { useSearchParams } from "react-router-dom";
 
 import MainView from "../MainView";
 import Uploader from "./components/Uploader";
-import { Replayer } from "./utils/replayer";
-
-const MESSAGE_KEY = "hmi_fetch_message";
 
 const ReplayView = () => {
   const [searchParams] = useSearchParams();
@@ -27,26 +24,15 @@ const ReplayView = () => {
           }
         });
         const files = await Promise.all(hmiFiles);
-        console.log(files);
-        messageApi.open({
-          key: MESSAGE_KEY,
-          type: "success",
-          content: "hmi文件加载成功"
-        });
+        return files;
       } catch (error) {
-        messageApi.open({
-          key: MESSAGE_KEY,
-          type: "error",
-          content: "hmi文件加载失败"
-        });
+        return Promise.reject(error);
       }
     },
     [messageApi]
   );
 
   useEffect(() => {
-    const replayer = new Replayer();
-
     // SSE 平台
     const path = searchParams.get("path");
     const bucketName = searchParams.get("bucketName");
@@ -56,6 +42,7 @@ const ReplayView = () => {
     const zipPath = searchParams.get("zipPath");
 
     let msgInstance: MessageType | null = null;
+    const MESSAGE_KEY = "hmi_fetch_message";
 
     if (path && bucketName) {
       console.log("SSE");
@@ -69,13 +56,23 @@ const ReplayView = () => {
         content: "hmi文件加载中..."
       });
       fetchZIP(
-        `https://10.151.5.77:30889${zipPath}?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=admin%2F20240730%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240730T030724Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=02b0edfa9fdbf157816a9dfeca151f0a704fc6b11e08501a16f80b5a41600ceb`
-      );
+        `https://10.151.5.77:30889${zipPath}?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=admin%2F20240730%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240730T075949Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=d58a386cb1ec4ab617ed30c0bef852eeed0a0dabb2840cc67660ebaab2f8f3c9`
+      )
+        .then((res) => {
+          console.log(res);
+          msgInstance?.();
+        })
+        .catch(() => {
+          messageApi.open({
+            key: MESSAGE_KEY,
+            type: "error",
+            content: "hmi文件加载失败"
+          });
+        });
     }
 
     return () => {
       msgInstance?.();
-      replayer.dispose();
     };
   }, [fetchZIP, messageApi]);
 
