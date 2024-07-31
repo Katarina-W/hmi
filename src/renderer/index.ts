@@ -1,4 +1,5 @@
 import {
+  Color,
   FrontSide,
   GridHelper,
   Group,
@@ -8,8 +9,8 @@ import {
   Vector3
 } from "three";
 
+import { ALL_TOPICS, VIRTUAL_RENDER_MAP } from "../constants/topic";
 import type { EgoCarUpdateData } from "./common";
-import { ALL_TOPICS, VIRTUAL_RENDER_MAP } from "./constants/topic";
 import ArrowRender from "./render/ArrowRender";
 import CrosswalkRender from "./render/CrosswalkRender";
 import CylinderRender from "./render/CylinderRender";
@@ -94,7 +95,9 @@ export default class Virtual extends RenderScene {
 
     this.addEvents();
 
-    this.preload();
+    this.preload().finally(() => {
+      this.emit("loaded");
+    });
   }
 
   prePos = new Vector3();
@@ -131,13 +134,12 @@ export default class Virtual extends RenderScene {
     emitter.on(ALL_TOPICS.CAR_POSE, this.updateCarPos);
   }
 
-  preload() {
-    EgoCarRender.preloading().then((res) => {
-      res.forEach((item) => {
-        if (item.status === "fulfilled") {
-          this.scene.add(item.value);
-        }
-      });
+  async preload() {
+    const cars = await EgoCarRender.preloading();
+    cars.forEach((item) => {
+      if (item.status === "fulfilled") {
+        this.scene.add(item.value);
+      }
     });
     const preloadArray = [
       RoadMarkerRender,
@@ -163,7 +165,14 @@ export default class Virtual extends RenderScene {
 
   setScene() {
     const size = 1000;
-    const gridHelper = new GridHelper(size / 2, size / 20, 0x888888, 0x888888);
+    const gridColor = new Color(0x888888).multiplyScalar(0.3);
+    const gridHelper = new GridHelper(
+      size / 2,
+      size / 20,
+      gridColor,
+      gridColor
+    );
+
     gridHelper.material.depthWrite = false;
     gridHelper.rotation.x = Math.PI / 2;
 

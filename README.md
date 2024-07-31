@@ -1,5 +1,10 @@
 # React Template
 
+## Important Notice
+
+**Strongly recommended to use [Visual Studio Code (VSCode)](https://code.visualstudio.com/download) and install the recommended extensions for the best development experience.**  
+_If you do not use VSCode and the recommended extensions, you will not be able to automatically fix errors on save and use Prettier for automatic formatting._
+
 ## Introduction
 
 This is a project template based on **React**, utilizing **React**, **React Router**, and **MobX** as the core tech stack, and **Vite** as the build tool. The project also integrates **ESLint** and **Prettier** for code formatting and quality checks, **Commitlint** for code submission information specification, with **TypeScript** support. The package manager used is **pnpm**.

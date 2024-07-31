@@ -1,8 +1,11 @@
 import { message } from "antd";
-import { MessageType } from "antd/es/message/interface";
+import type { MessageType } from "antd/es/message/interface";
 import JSZip from "jszip";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+
+import renderEmitter from "@/renderer/utils/renderEmitter";
+import { formatHMIData } from "@/utils/format";
 
 import MainView from "../MainView";
 import Uploader from "./components/Uploader";
@@ -10,6 +13,63 @@ import Uploader from "./components/Uploader";
 const ReplayView = () => {
   const [searchParams] = useSearchParams();
   const [messageApi, contextHolder] = message.useMessage();
+  const [filesLength, setFilesLength] = useState(0);
+  const worker = useRef<Worker | null>(null);
+
+  useEffect(() => {
+    worker.current = new Worker(
+      new URL("./workers/local.worker.ts", import.meta.url),
+      {
+        type: "module"
+      }
+    );
+
+    const onData = (data: { timestamp: number; text: string }) => {
+      if (data.text.startsWith("{") && data.text.endsWith("}")) {
+        const res = formatHMIData(data.text);
+        if (!res) return;
+        renderEmitter.emit(res.topic, res);
+      } else {
+        const jsonData = window.atob(data.text);
+        try {
+          let data;
+          if (jsonData[0] === "{") {
+            data = jsonData;
+          } else {
+            const uint8buffer = new Uint8Array(jsonData.length);
+            for (let i = 0; i < jsonData.length; i++) {
+              uint8buffer[i] = jsonData.charCodeAt(i);
+            }
+            data = uint8buffer.buffer;
+          }
+          data = formatHMIData(data);
+          if (!data) return;
+          renderEmitter.emit(data.topic, data);
+        } catch (error) {
+          // console.log(error);
+        }
+      }
+    };
+
+    worker.current.onmessage = (ev) => {
+      const { type, data } = ev.data;
+      switch (type) {
+        case "duration":
+          console.log(data);
+          break;
+        case "data":
+          onData(data);
+      }
+    };
+    return () => {
+      worker.current?.terminate();
+    };
+  }, []);
+
+  const renderView = useMemo(
+    () => !!searchParams.size || !!filesLength,
+    [searchParams, filesLength]
+  );
 
   const fetchZIP = useCallback(
     async (url: string) => {
@@ -76,10 +136,30 @@ const ReplayView = () => {
     };
   }, [fetchZIP, messageApi]);
 
+  const onLoaded = useCallback(() => {
+    console.log("loaded");
+    worker.current?.postMessage({
+      type: "play"
+    });
+  }, []);
+
+  const onFilesChange = useCallback((files: File[]) => {
+    console.log(files);
+    setFilesLength(files.length);
+    worker.current?.postMessage({
+      type: "files",
+      data: files
+    });
+  }, []);
+
   return (
     <>
       {contextHolder}
-      {searchParams.size ? <MainView /> : <Uploader />}
+      {renderView ? (
+        <MainView onLoaded={onLoaded} />
+      ) : (
+        <Uploader onChange={onFilesChange} />
+      )}
     </>
   );
 };

@@ -1,9 +1,9 @@
 import {
   AnimationClip,
-  AnimationClipJSON,
+  type AnimationClipJSON,
   Camera,
   Group,
-  Object3DJSON,
+  type Object3DJSON,
   ObjectLoader
 } from "three";
 import {
@@ -15,8 +15,8 @@ import {
   MODEL_CACHE_DB_NAME,
   MODEL_CACHE_STORE_NAME,
   MODEL_CACHE_VERSION
-} from "../../constants";
-import createCache from "../cache";
+} from "@/constants";
+import createCache from "@/utils/cache";
 
 interface GLTFJSON {
   animations: AnimationClipJSON[];

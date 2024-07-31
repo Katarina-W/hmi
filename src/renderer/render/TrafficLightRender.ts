@@ -1,7 +1,7 @@
 import type { Scene } from "three";
 
+import type { VIRTUAL_RENDER_MAP } from "../../constants/topic";
 import { TrafficLight, type TrafficLightUpdateData } from "../common";
-import type { VIRTUAL_RENDER_MAP } from "../constants/topic";
 import emitter from "../utils/renderEmitter";
 
 type TOPIC_TYPE = (typeof VIRTUAL_RENDER_MAP.trafficLightModel)[number];

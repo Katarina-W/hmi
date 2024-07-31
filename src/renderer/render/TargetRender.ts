@@ -1,7 +1,7 @@
 import type { Scene } from "three";
 
+import { ALL_TOPICS, type VIRTUAL_RENDER_MAP } from "../../constants/topic";
 import { Target, type TargetUpdateData } from "../common";
-import { ALL_TOPICS, type VIRTUAL_RENDER_MAP } from "../constants/topic";
 import emitter from "../utils/renderEmitter";
 
 type TOPIC_TYPE = (typeof VIRTUAL_RENDER_MAP.target)[number];

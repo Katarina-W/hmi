@@ -6,8 +6,8 @@ import * as echarts from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { HZ } from "@/renderer/constants";
-import { ALL_TOPICS } from "@/renderer/constants/topic";
+import { HZ } from "@/constants";
+import { ALL_TOPICS } from "@/constants/topic";
 import renderEmitter from "@/renderer/utils/renderEmitter";
 import { formatBytes } from "@/utils/format";
 

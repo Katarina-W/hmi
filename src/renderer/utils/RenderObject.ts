@@ -6,8 +6,8 @@ import {
   SkinnedMesh
 } from "three";
 
-import type { ALL_TOPICS } from "../constants/topic";
-import { UpdateDataTool } from "../typings";
+import type { ALL_TOPICS } from "../../constants/topic";
+import type { UpdateDataTool } from "../typings";
 import renderOrderer from "./renderOrderer";
 
 export default abstract class RenderObject {
