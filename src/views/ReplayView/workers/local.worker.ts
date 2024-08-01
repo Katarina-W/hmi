@@ -4,10 +4,10 @@
 import { HMI_CACHE_DB_NAME, HMI_CACHE_STORE_NAME, HZ } from "@/constants";
 import createCache from "@/utils/cache";
 import {
-  readFileAsText,
   readFileBothRowByFile,
   readFileFirstRowByFile,
-  readFileLastRowByFile
+  readFileLastRowByFile,
+  readRowByFile
 } from "@/utils/file";
 import { transform_MS } from "@/utils/format";
 
@@ -79,21 +79,28 @@ const setLocalCache = (key: number, line: string) => {
 
 const setCache = async (files: File[]) => {
   for (const file of files) {
-    const text = await readFileAsText(file);
-    const lines = text.split("\n");
-    lines.map(async (line) => {
-      const colonIndex = line.indexOf(":");
-      if (colonIndex === -1) return;
-      const timestamp = +line.slice(0, colonIndex);
-      const key = getKeyByTime(timestamp);
-      setLocalCache(key, line);
-      const value = await cache.get<string[]>(key);
-      if (!value) {
-        cache.set(key, [line]);
-      } else {
-        cache.set(key, [...value, line]);
-      }
-    });
+    let currentStartLine = 0;
+    const lineCount = 1000;
+    let chunk = await readRowByFile(file, currentStartLine, lineCount);
+    while (chunk) {
+      const lines = chunk.split("\n");
+      lines.map(async (line) => {
+        const colonIndex = line.indexOf(":");
+        if (colonIndex === -1) return;
+        const timestamp = +line.slice(0, colonIndex);
+        const key = getKeyByTime(timestamp);
+        setLocalCache(key, line);
+        const value = await cache.get<string[]>(key);
+        if (!value) {
+          cache.set(key, [line]);
+        } else {
+          cache.set(key, [...value, line]);
+        }
+      });
+      if (lines.length < lineCount) break;
+      currentStartLine += lineCount;
+      chunk = await readRowByFile(file, currentStartLine, 1000);
+    }
   }
 };
 
