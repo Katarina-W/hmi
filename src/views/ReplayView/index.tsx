@@ -25,30 +25,9 @@ const ReplayView = () => {
     );
 
     const onData = (data: { timestamp: number; text: string }) => {
-      if (data.text.startsWith("{") && data.text.endsWith("}")) {
-        const res = formatHMIData(data.text);
-        if (!res) return;
-        renderEmitter.emit(res.topic, res);
-      } else {
-        const jsonData = window.atob(data.text);
-        try {
-          let data;
-          if (jsonData[0] === "{") {
-            data = jsonData;
-          } else {
-            const uint8buffer = new Uint8Array(jsonData.length);
-            for (let i = 0; i < jsonData.length; i++) {
-              uint8buffer[i] = jsonData.charCodeAt(i);
-            }
-            data = uint8buffer.buffer;
-          }
-          data = formatHMIData(data);
-          if (!data) return;
-          renderEmitter.emit(data.topic, data);
-        } catch (error) {
-          // console.log(error);
-        }
-      }
+      const res = formatHMIData(data.text);
+      if (!res) return;
+      renderEmitter.emit(res.topic, res);
     };
 
     worker.current.onmessage = (ev) => {

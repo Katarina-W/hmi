@@ -64,58 +64,64 @@ export function transform_MS(timestamp: number) {
   return timestamp / Math.pow(10, lengthDiff);
 }
 
+function parseJson(msg: string) {
+  if (msg.startsWith("{") && msg.endsWith("}")) {
+    return JSON.parse(msg);
+  }
+  return msg;
+}
+
+function parseProtobuf(data: string) {
+  const uint8buffer = new Uint8Array(data.length);
+  for (let i = 0; i < data.length; i++) {
+    uint8buffer[i] = data.charCodeAt(i);
+  }
+  const uint8Array = new Uint8Array(uint8buffer.buffer);
+  const res = ProtobufElementSchema.decode(uint8Array) as any;
+  return processElements(res.elements[0]);
+}
+
+function processElements(element: any) {
+  const type = element.type as keyof typeof ATTRIBUTE_MAP;
+  return {
+    topic: element.topic,
+    data: {
+      data: element[ATTRIBUTE_MAP[type]].data,
+      defaultEnable: element.defaultEnable,
+      group: "others",
+      style: {},
+      timestamp_nsec: element.timestampNsec,
+      topic: element.topic,
+      type: type
+    }
+  };
+}
+
 export function formatHMIData(
-  msg: string | ArrayBuffer | null
+  msg: string
 ): Parameters<TopicEvent[keyof TopicEvent]>[number] | undefined {
-  if (typeof msg === "string") {
-    const data = JSON.parse(msg);
-    if (data.value?.value0) {
+  try {
+    let obj = parseJson(msg);
+    if (typeof obj === "string") {
+      obj = parseJson(window.atob(obj));
+    }
+    if (typeof obj === "object") {
+      if (obj.value?.value0) {
+        return {
+          topic: obj.topic,
+          data: obj.value.value0
+        };
+      }
+      if (obj.elements) {
+        return processElements(obj.elements[0]);
+      }
       return {
-        topic: data.topic,
-        data: data.value.value0
-      };
-    } else if (data.elements) {
-      const element = data.elements[0];
-      const type = element.type as keyof typeof ATTRIBUTE_MAP;
-      return {
-        topic: element.topic,
-        data: {
-          data: element[ATTRIBUTE_MAP[type]].data,
-          defaultEnable: element.defaultEnable,
-          group: "others",
-          style: {},
-          timestamp_nsec: element.timestampNsec,
-          topic: element.topic,
-          type: type
-        }
+        topic: obj.topic,
+        data: obj
       };
     }
-    return {
-      topic: data.topic,
-      data: data
-    };
-  } else if (msg instanceof ArrayBuffer) {
-    try {
-      const uint8Array = new Uint8Array(msg);
-      const res = ProtobufElementSchema.decode(uint8Array) as any;
-      const element = res.elements[0];
-      const type = element.type as keyof typeof ATTRIBUTE_MAP;
-      return {
-        topic: element.topic,
-        data: {
-          data: element[ATTRIBUTE_MAP[type]].data,
-          defaultEnable: element.defaultEnable,
-          group: "others",
-          style: {},
-          timestamp_nsec: element.timestampNsec,
-          topic: element.topic,
-          type: type
-        }
-      };
-    } catch (error) {
-      // console.error("protobuf数据处理错误:", error);
-    }
-  } else {
-    console.log("unknown data", msg);
+    return parseProtobuf(obj);
+  } catch (error) {
+    console.error("Error formatting HMI data:", error);
   }
 }
