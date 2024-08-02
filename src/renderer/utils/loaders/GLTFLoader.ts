@@ -11,11 +11,7 @@ import {
   GLTFLoader as BASE_GLTFLoader
 } from "three/examples/jsm/loaders/GLTFLoader.js";
 
-import {
-  MODEL_CACHE_DB_NAME,
-  MODEL_CACHE_STORE_NAME,
-  MODEL_CACHE_VERSION
-} from "@/constants";
+import { MODEL_CACHE_DB_NAME, MODEL_CACHE_STORE_NAME } from "@/constants";
 import createCache from "@/utils/cache";
 
 interface GLTFJSON {
@@ -32,7 +28,7 @@ const loader = new ObjectLoader();
 const cache = createCache({
   dbName: MODEL_CACHE_DB_NAME,
   storeName: MODEL_CACHE_STORE_NAME,
-  version: MODEL_CACHE_VERSION
+  version: __MODEL_DIRECTORY_HASH__
 });
 
 // 序列化 GLTF 对象

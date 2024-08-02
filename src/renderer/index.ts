@@ -1,5 +1,6 @@
 import {
   Color,
+  Euler,
   FrontSide,
   GridHelper,
   Group,
@@ -38,6 +39,14 @@ export default class Virtual extends RenderScene {
   };
 
   ground = new Group();
+
+  /** 作用于跟随车辆 */
+  pos = new Vector3();
+  euler = new Euler();
+  prePos?: Vector3;
+  deltaPos = new Vector3();
+  targetOffset = new Vector3(3, 0, 6); // 相机在车辆后方的偏移量
+  cameraOffset = new Vector3(-22, 0, 12); // 相机在车辆后方的偏移量
 
   constructor() {
     super();
@@ -100,23 +109,31 @@ export default class Virtual extends RenderScene {
     });
   }
 
-  prePos = new Vector3();
-
   updateCarPos = (data: { data: EgoCarUpdateData }) => {
-    const [{ position, rotation }] = data.data.data;
-    const pos = new Vector3(position.x, position.y, -0.3);
-    this.ground.position.copy(pos);
+    const { position, rotation } = data.data.data[0];
+    this.pos.set(position.x, position.y, position.z);
+    this.euler.set(rotation.x, rotation.y, rotation.z);
+
+    // 更新地面的位置和旋转
+    this.ground.position.copy(this.pos);
     this.ground.rotation.z = rotation.z;
 
-    const deltaPos = new Vector3().copy(pos).sub(this.prePos);
+    if (!this.prePos) {
+      // 首次更新：计算相对位置和旋转
+      const cameraOffset = this.cameraOffset.clone().applyEuler(this.euler);
+      const targetOffset = this.targetOffset.clone().applyEuler(this.euler);
 
-    this.camera.position.add(deltaPos);
-
-    this.controls.target.add(deltaPos);
-
-    this.prePos.copy(pos);
-
-    this.updateControls();
+      this.camera.position.copy(this.pos.clone().add(cameraOffset));
+      this.camera.lookAt(this.pos);
+      this.controls.target.copy(this.pos.clone().add(targetOffset));
+      this.prePos = this.pos.clone();
+    } else {
+      // 后续更新：根据位置增量调整相机
+      this.deltaPos.subVectors(this.pos, this.prePos);
+      this.camera.position.add(this.deltaPos);
+      this.controls.target.add(this.deltaPos);
+      this.prePos.copy(this.pos);
+    }
   };
 
   addEvents() {
@@ -159,7 +176,8 @@ export default class Virtual extends RenderScene {
   }
 
   updateControler() {
-    this.controls.target.set(3, 0, 6);
+    this.camera.position.copy(this.cameraOffset);
+    this.controls.target.copy(this.targetOffset);
     this.updateControls();
   }
 

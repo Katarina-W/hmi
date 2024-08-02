@@ -63,7 +63,7 @@ export default abstract class EgoCar extends RenderObject {
 
   setModelAttributes(model: Object3D, modelData: DataType) {
     const { position, rotation } = modelData;
-    model.position.set(position.x, position.y, 0);
+    model.position.set(position.x, position.y, position.z);
     model.rotation.set(rotation.x, rotation.y, rotation.z);
   }
 

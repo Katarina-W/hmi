@@ -11,7 +11,7 @@ import {
 } from "@/utils/file";
 import { transform_MS } from "@/utils/format";
 
-import type { MessageData } from "../typings/local";
+import type { OnMessageType, PostMessageType } from ".";
 
 const cache = createCache({
   dbName: HMI_CACHE_DB_NAME,
@@ -57,7 +57,7 @@ const readDuration = async (files: File[]) => {
   if (!duration) return;
   startTime = duration.start;
   endTime = duration.end;
-  postMessage({
+  postMsg({
     type: "duration",
     data: duration
   });
@@ -118,7 +118,7 @@ const play = (timestamp = startTime) => {
       const colonIndex = line.indexOf(":");
       if (colonIndex === -1) return;
       const timestamp = transform_MS(+line.slice(0, colonIndex));
-      postMessage({
+      postMsg({
         type: "data",
         data: {
           timestamp,
@@ -140,7 +140,7 @@ const clearCache = () => {
   return cache.clear();
 };
 
-onmessage = (ev: MessageEvent<MessageData>) => {
+onmessage = (ev: MessageEvent<PostMessageType>) => {
   const { type, data } = ev.data;
   switch (type) {
     case "files":
@@ -157,4 +157,8 @@ onmessage = (ev: MessageEvent<MessageData>) => {
       console.log(data);
       break;
   }
+};
+
+const postMsg = (msg: OnMessageType) => {
+  postMessage(msg);
 };

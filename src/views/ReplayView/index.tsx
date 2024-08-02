@@ -4,42 +4,24 @@ import JSZip from "jszip";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
-import renderEmitter from "@/renderer/utils/renderEmitter";
-import { formatHMIData } from "@/utils/format";
-
 import MainView from "../MainView";
 import Uploader from "./components/Uploader";
+import { LocalReplay } from "./utils/local";
 
 const ReplayView = () => {
   const [searchParams] = useSearchParams();
   const [messageApi, contextHolder] = message.useMessage();
   const [filesLength, setFilesLength] = useState(0);
-  const worker = useRef<Worker | null>(null);
+  const worker = useRef<LocalReplay | null>(null);
 
   useEffect(() => {
-    worker.current = new Worker(
-      new URL("./workers/local.worker.ts", import.meta.url),
+    worker.current = new LocalReplay(
+      new URL("./utils/local/worker.ts", import.meta.url),
       {
         type: "module"
       }
     );
 
-    const onData = (data: { timestamp: number; text: string }) => {
-      const res = formatHMIData(data.text);
-      if (!res) return;
-      renderEmitter.emit(res.topic, res);
-    };
-
-    worker.current.onmessage = (ev) => {
-      const { type, data } = ev.data;
-      switch (type) {
-        case "duration":
-          console.log(data);
-          break;
-        case "data":
-          onData(data);
-      }
-    };
     return () => {
       worker.current?.terminate();
     };
