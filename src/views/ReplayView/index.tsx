@@ -1,29 +1,40 @@
 import { message } from "antd";
 import type { MessageType } from "antd/es/message/interface";
+import classNames from "classnames";
 import JSZip from "jszip";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import MainView from "../MainView";
+import Controler from "./components/Controler";
 import Uploader from "./components/Uploader";
-import { LocalReplay } from "./utils/local";
+import styles from "./index.module.less";
+import { HMIPlayer } from "./player";
 
 const ReplayView = () => {
   const [searchParams] = useSearchParams();
   const [messageApi, contextHolder] = message.useMessage();
   const [filesLength, setFilesLength] = useState(0);
-  const worker = useRef<LocalReplay | null>(null);
+
+  const player = useRef<HMIPlayer>();
+
+  const [duration, setDuration] = useState<{
+    startTime: number;
+    endTime: number;
+  }>({ startTime: 0, endTime: 0 });
+  const [currentTime, setCurrentTime] = useState(0);
 
   useEffect(() => {
-    worker.current = new LocalReplay(
-      new URL("./utils/local/worker.ts", import.meta.url),
-      {
-        type: "module"
-      }
-    );
+    player.current = new HMIPlayer();
+    player.current.on("duration", (data) => {
+      setDuration(data);
+    });
+    player.current.on("currentTime", (timestamp) => {
+      setCurrentTime(timestamp);
+    });
 
     return () => {
-      worker.current?.terminate();
+      player.current?.dispose();
     };
   }, []);
 
@@ -99,25 +110,24 @@ const ReplayView = () => {
 
   const onLoaded = useCallback(() => {
     console.log("loaded");
-    worker.current?.postMessage({
-      type: "play"
-    });
+    player.current?.play();
   }, []);
 
   const onFilesChange = useCallback((files: File[]) => {
-    console.log(files);
     setFilesLength(files.length);
-    worker.current?.postMessage({
-      type: "files",
-      data: files
-    });
+    player.current?.init(files);
   }, []);
 
   return (
     <>
       {contextHolder}
       {renderView ? (
-        <MainView onLoaded={onLoaded} />
+        <div className={classNames(styles["replay-view"])}>
+          <div className={classNames(styles["controler-wrapper"])}>
+            <Controler duration={duration} currentTime={currentTime} />
+          </div>
+          <MainView onLoaded={onLoaded} />
+        </div>
       ) : (
         <Uploader onChange={onFilesChange} />
       )}

@@ -11,10 +11,10 @@ import {
 } from "three";
 
 import { ALL_TOPICS, VIRTUAL_RENDER_MAP } from "../constants/topic";
-import type { EgoCarUpdateData } from "./common";
 import ArrowRender from "./render/ArrowRender";
 import CrosswalkRender from "./render/CrosswalkRender";
 import CylinderRender from "./render/CylinderRender";
+import type { UpdateData as EgoCarUpdateData } from "./render/EgoCarRender";
 import EgoCarRender from "./render/EgoCarRender";
 import EllipseRender from "./render/EllipseRender";
 import FixedPolygonRender from "./render/FixedPolygonRender";
@@ -34,6 +34,8 @@ import type RenderObject from "./utils/RenderObject";
 import RenderScene from "./utils/RenderScene";
 
 export default class Virtual extends RenderScene {
+  carRender: EgoCarRender;
+
   createRender: {
     [K in VIRTUAL_RENDER_TYPE]: RenderObject[];
   };
@@ -51,12 +53,11 @@ export default class Virtual extends RenderScene {
   constructor() {
     super();
 
+    this.carRender = new EgoCarRender(this.scene);
+
     this.createRender = {
       arrow: VIRTUAL_RENDER_MAP.arrow.map(
         (topic) => new ArrowRender(this.scene, topic)
-      ),
-      car_pose: VIRTUAL_RENDER_MAP.car_pose.map(
-        (topic) => new EgoCarRender(this.scene, topic)
       ),
       crosswalk: VIRTUAL_RENDER_MAP.crosswalk.map(
         (topic) => new CrosswalkRender(this.scene, topic)
@@ -111,6 +112,9 @@ export default class Virtual extends RenderScene {
 
   updateCarPos = (data: { data: EgoCarUpdateData }) => {
     const { position, rotation } = data.data.data[0];
+
+    if (this.carRender.car) this.carRender.update(data.data);
+
     this.pos.set(position.x, position.y, position.z);
     this.euler.set(rotation.x, rotation.y, rotation.z);
 
@@ -152,12 +156,6 @@ export default class Virtual extends RenderScene {
   }
 
   async preload() {
-    const cars = await EgoCarRender.preloading();
-    cars.forEach((item) => {
-      if (item.status === "fulfilled") {
-        this.scene.add(item.value);
-      }
-    });
     const preloadArray = [
       RoadMarkerRender,
       PoleRender,

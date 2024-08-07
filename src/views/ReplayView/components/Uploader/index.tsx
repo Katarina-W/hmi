@@ -1,11 +1,11 @@
 import { Flex, Layout, message, Upload } from "antd";
 import type { RcFile } from "antd/es/upload";
 import classnames from "classnames";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 
 import styles from "./index.module.less";
 
-export default (props: { onChange: (file: File[]) => void }) => {
+const Uploader = (props: { onChange: (file: File[]) => void }) => {
   const [fileList, setFileList] = useState<RcFile[]>([]);
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -64,3 +64,5 @@ export default (props: { onChange: (file: File[]) => void }) => {
     </>
   );
 };
+
+export default memo(Uploader);

@@ -1,3 +1,4 @@
+import { HZ } from "@/constants";
 import type { TopicEvent } from "@/renderer/typings";
 
 import {
@@ -22,6 +23,29 @@ export function formatTime(ms: number): string {
     return `${padZero(hour)}:${padZero(minute)}:${padZero(second)}`;
   }
   return `${padZero(minute)}:${padZero(second)}`;
+}
+
+export function formatTimestamp(ms: number) {
+  if (typeof ms !== "number" || Number.isNaN(ms) || ms <= 0) {
+    return "00:00";
+  }
+  const date = new Date(ms);
+
+  const pad = (num: number, size = 2) => {
+    let s = String(num);
+    while (s.length < size) s = "0" + s;
+    return s;
+  };
+
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  const seconds = pad(date.getSeconds());
+  const milliseconds = pad(date.getMilliseconds(), 3);
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
 }
 
 function padZero(num: number, len = 2): string {
@@ -103,7 +127,7 @@ export function formatHMIData(
   try {
     let obj = parseJson(msg);
     if (typeof obj === "string") {
-      obj = parseJson(window.atob(obj));
+      obj = parseJson(atob(obj));
     }
     if (typeof obj === "object") {
       if (obj.value?.value0) {
@@ -124,4 +148,8 @@ export function formatHMIData(
   } catch (error) {
     console.error("Error formatting HMI data:", error);
   }
+}
+
+export function getKeyByTime(timestamp: number) {
+  return Math.floor(transform_MS(timestamp) / (1000 / HZ));
 }

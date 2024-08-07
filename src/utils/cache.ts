@@ -9,9 +9,12 @@ import {
 } from "idb-keyval";
 
 interface Options {
+  /** 数据库名称 */
   dbName: string;
+  /** 存储名称 */
   storeName: string;
-  version?: IDBValidKey;
+  /** 数据库版本: false则不校验版本 */
+  version: IDBValidKey | false;
 }
 
 const createCache = (options: Options) => {
@@ -19,7 +22,7 @@ const createCache = (options: Options) => {
 
   const versionKey = "cache_version";
 
-  let isChecked = false;
+  let isChecked = options.version !== false;
   let currentVersion: IDBValidKey | undefined;
 
   const checkVersion = async () => {
@@ -30,7 +33,7 @@ const createCache = (options: Options) => {
       }
       if (currentVersion !== options.version) {
         await dbClear(store);
-        currentVersion = options.version;
+        currentVersion = options.version as IDBValidKey;
         await dbSet(versionKey, options.version, store);
       }
       isChecked = true;

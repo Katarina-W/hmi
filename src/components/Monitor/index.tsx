@@ -4,7 +4,7 @@ import { LineChart } from "echarts/charts";
 import { GridComponent } from "echarts/components";
 import * as echarts from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 
 import { HZ } from "@/constants";
 import { ALL_TOPICS } from "@/constants/topic";
@@ -15,7 +15,7 @@ import styles from "./index.module.less";
 
 echarts.use([GridComponent, LineChart, CanvasRenderer]);
 
-const MonitorChart = (props: { fps: number }) => {
+const MonitorChart = memo((props: { fps: number }) => {
   const ref = useRef<HTMLDivElement>(null);
   const chart = useRef<echarts.ECharts>();
   const chartData = useRef<number[]>([]);
@@ -121,55 +121,55 @@ const MonitorChart = (props: { fps: number }) => {
       <div ref={ref} className={classNames(styles["chart-wrapper"])}></div>
     </section>
   );
-};
+});
 
-const MonitorPanel = (props: {
-  memory?: Memory;
-  geometries?: number;
-  textures?: number;
-}) => {
-  const [ips, setIps] = useState<string[]>([]);
-  useEffect(() => {
-    renderEmitter.on(ALL_TOPICS.CONN_LIST, (data) => {
-      setIps((data as any).conn_list || []);
-    });
+const MonitorPanel = memo(
+  (props: { memory?: Memory; geometries?: number; textures?: number }) => {
+    const [ips, setIps] = useState<string[]>([]);
+    useEffect(() => {
+      renderEmitter.on(ALL_TOPICS.CONN_LIST, (data) => {
+        setIps((data as any).conn_list || []);
+      });
 
-    return () => {
-      renderEmitter.off(ALL_TOPICS.CONN_LIST);
-    };
-  }, []);
-  return (
-    <section className={classNames(styles["monitor-panel"])}>
-      {props.memory && (
+      return () => {
+        renderEmitter.off(ALL_TOPICS.CONN_LIST);
+      };
+    }, []);
+    return (
+      <section className={classNames(styles["monitor-panel"])}>
+        {props.memory && (
+          <div className={classNames(styles["panel-row"])}>
+            <span>js内存: {formatBytes(props.memory.usedJSHeapSize)}</span>
+            <span>
+              内存占比:{" "}
+              {(
+                (props.memory.usedJSHeapSize / props.memory.jsHeapSizeLimit) *
+                100
+              ).toFixed(2)}
+              %
+            </span>
+          </div>
+        )}
         <div className={classNames(styles["panel-row"])}>
-          <span>js内存: {formatBytes(props.memory.usedJSHeapSize)}</span>
           <span>
-            内存占比:{" "}
-            {(
-              (props.memory.usedJSHeapSize / props.memory.jsHeapSizeLimit) *
-              100
-            ).toFixed(2)}
-            %
+            WebGL: {props.geometries ?? 0}/{props.textures ?? 0}
+          </span>
+          <span
+            className={classNames({ [styles["multi-ips"]]: ips.length > 1 })}
+          >
+            <Tooltip
+              title={ips.map((ip) => (
+                <div>{ip}</div>
+              ))}
+            >
+              实时在线: {ips.length}
+            </Tooltip>
           </span>
         </div>
-      )}
-      <div className={classNames(styles["panel-row"])}>
-        <span>
-          WebGL: {props.geometries ?? 0}/{props.textures ?? 0}
-        </span>
-        <span className={classNames({ [styles["multi-ips"]]: ips.length > 1 })}>
-          <Tooltip
-            title={ips.map((ip) => (
-              <div>{ip}</div>
-            ))}
-          >
-            实时在线: {ips.length}
-          </Tooltip>
-        </span>
-      </div>
-    </section>
-  );
-};
+      </section>
+    );
+  }
+);
 
 const Monitor = (props: {
   fps: number;
@@ -190,4 +190,4 @@ const Monitor = (props: {
   );
 };
 
-export default Monitor;
+export default memo(Monitor);

@@ -1,6 +1,6 @@
 import { Spin } from "antd";
 import classNames from "classnames";
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
 import Monitor from "@/components/Monitor";
 import { CANVAS_ID } from "@/constants";
@@ -58,4 +58,4 @@ function MainView(props: {
   );
 }
 
-export default MainView;
+export default memo(MainView);

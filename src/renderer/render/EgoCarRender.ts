@@ -1,20 +1,50 @@
-import type { Scene } from "three";
+import type { Object3D, Scene, Vector3Like } from "three";
 
-import type { VIRTUAL_RENDER_MAP } from "../../constants/topic";
-import { EgoCar, type EgoCarUpdateData } from "../common";
-import emitter from "../utils/renderEmitter";
+import { EgoCar as EgoCarModel } from "@/assets/model";
 
-type TOPIC_TYPE = (typeof VIRTUAL_RENDER_MAP.car_pose)[number];
+import type { UpdateDataTool } from "../typings";
+import GLTFLoader from "../utils/loaders/GLTFLoader";
 
-export default class EgoCarRender extends EgoCar {
-  topic: TOPIC_TYPE;
+interface DataType {
+  posWGS84: Vector3Like;
+  position: Vector3Like;
+  rotation: Vector3Like;
+}
 
-  constructor(scene: Scene, topic: TOPIC_TYPE) {
-    super(scene);
-    this.topic = topic;
+const gltfLoader = new GLTFLoader();
 
-    emitter.on(topic, (data: { data: EgoCarUpdateData; topic: TOPIC_TYPE }) => {
-      this.update(data.data);
+export interface UpdateData extends UpdateDataTool<DataType[]> {
+  type: "car_pose";
+}
+
+export default class EgoCarRender {
+  scene: Scene;
+  car?: Object3D;
+
+  constructor(scene: Scene) {
+    this.scene = scene;
+    this.preloading();
+  }
+
+  async preloading() {
+    const gltf = await gltfLoader.loadAsync(EgoCarModel);
+    const model = gltf.scene;
+    this.car = model;
+    this.scene.add(model);
+  }
+
+  setModelAttributes(model: Object3D, modelData: DataType) {
+    const { position, rotation } = modelData;
+    model.position.set(position.x, position.y, position.z);
+    model.rotation.set(rotation.x, rotation.y, rotation.z);
+  }
+
+  update(data: UpdateData) {
+    if (!data.data.length) return;
+    data.data.forEach((item) => {
+      if (this.car) {
+        this.setModelAttributes(this.car, item);
+      }
     });
   }
 }

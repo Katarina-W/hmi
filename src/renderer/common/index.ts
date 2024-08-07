@@ -4,8 +4,6 @@ export type { UpdateData as CrosswalkUpdateData } from "./Crosswalk";
 export { default as Crosswalk } from "./Crosswalk";
 export type { UpdateData as CylinderUpdateData } from "./Cylinder";
 export { default as Cylinder } from "./Cylinder";
-export type { UpdateData as EgoCarUpdateData } from "./EgoCar";
-export { default as EgoCar } from "./EgoCar";
 export type { UpdateData as EllipseUpdateData } from "./Ellipse";
 export { default as Ellipse } from "./Ellipse";
 export type { UpdateData as FixedPolygonUpdateData } from "./FixedPolygon";
