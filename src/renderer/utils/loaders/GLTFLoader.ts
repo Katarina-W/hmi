@@ -12,7 +12,7 @@ import {
 } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { MODEL_CACHE_DB_NAME, MODEL_CACHE_STORE_NAME } from "@/constants";
-import createCache from "@/utils/cache";
+import { createStore } from "@/utils/indexedDB";
 
 interface GLTFJSON {
   animations: AnimationClipJSON[];
@@ -25,11 +25,20 @@ interface GLTFJSON {
 
 const loader = new ObjectLoader();
 
-const cache = createCache({
+const store = createStore({
   dbName: MODEL_CACHE_DB_NAME,
-  storeName: MODEL_CACHE_STORE_NAME,
-  version: __MODEL_DIRECTORY_HASH__
+  storeName: MODEL_CACHE_STORE_NAME
 });
+
+// 根据 __MODEL_DIRECTORY_HASH__ 校验缓存是否更新
+const versionKey = "cache_version";
+
+await store.init();
+const cacheVersion = await store.get<string>(versionKey);
+if (!cacheVersion || cacheVersion !== __MODEL_DIRECTORY_HASH__) {
+  cacheVersion && (await store.clear());
+  await store.set(versionKey, __MODEL_DIRECTORY_HASH__);
+}
 
 // 序列化 GLTF 对象
 const serializeGLTF = (gltf: GLTF): GLTFJSON => ({
@@ -64,7 +73,7 @@ export default class GLTFLoader extends BASE_GLTFLoader {
     onError?: (err: unknown) => void
   ) {
     try {
-      const data = await cache.get<GLTFJSON>(url);
+      const data = await store.get<GLTFJSON>(url);
       if (data) {
         this.#retry = 0;
         this.manager.itemEnd(url);
@@ -78,7 +87,7 @@ export default class GLTFLoader extends BASE_GLTFLoader {
             this.manager.itemEnd(url);
             onLoad(gltf);
             const g = serializeGLTF(gltf);
-            cache.set(url, g);
+            store.set(url, g);
           },
           onProgress,
           () => {
@@ -90,7 +99,7 @@ export default class GLTFLoader extends BASE_GLTFLoader {
       }
     } catch (error) {
       try {
-        await cache.del(url);
+        await store.delete(url);
         this.manager.itemEnd(url);
         this.#retry++;
         this.load(url, onLoad, onProgress, onError);

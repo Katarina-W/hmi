@@ -1,11 +1,11 @@
 import { HMI_CACHE_DB_NAME, HMI_CACHE_STORE_NAME, HZ } from "@/constants";
-import createCache from "@/utils/cache";
 import {
   readBothRowByChunk,
   readFirstRowByChunk,
   readLastRowByChunk
 } from "@/utils/file";
 import { formatHMIData, getKeyByTime, transform_MS } from "@/utils/format";
+import { createStore } from "@/utils/indexedDB";
 
 interface FileType {
   type: "file";
@@ -23,14 +23,13 @@ interface PauseType {
 
 type MessageType = FileType | PlayType | PauseType;
 
-const hmiCache = createCache({
+const store = createStore({
   dbName: HMI_CACHE_DB_NAME,
-  storeName: HMI_CACHE_STORE_NAME,
-  version: false
+  storeName: HMI_CACHE_STORE_NAME
 });
 
 const MIN_BUFFER_SIZE = 100;
-const bufferMap = new Map<number, string[]>();
+const bufferMap = new Map<number, string[] | undefined>();
 let getKeys: number[] = [];
 let isGetting = false;
 let isWaiting = false;
@@ -78,7 +77,7 @@ const getCache = async () => {
   const diff = Math.min(MIN_BUFFER_SIZE - bufferMap.size, maxKey - currentKey);
   getKeys = Array.from({ length: diff }, (_, i) => bufferLastKey + i + 1);
   try {
-    const values = await hmiCache.getMany<string[]>(getKeys);
+    const values = await store.get<string[]>(getKeys);
     values.forEach((value, i) => {
       bufferMap.set(getKeys[i], value);
     });

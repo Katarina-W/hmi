@@ -1,7 +1,7 @@
 import { HMI_CACHE_DB_NAME, HMI_CACHE_STORE_NAME } from "@/constants";
-import createCache from "@/utils/cache";
 import { parseFileInChunks } from "@/utils/file";
 import { getKeyByTime } from "@/utils/format";
+import { createStore } from "@/utils/indexedDB";
 
 interface FileType {
   type: "file";
@@ -10,15 +10,14 @@ interface FileType {
 
 type MessageType = FileType;
 
-const hmiCache = createCache({
+const store = createStore({
   dbName: HMI_CACHE_DB_NAME,
-  storeName: HMI_CACHE_STORE_NAME,
-  version: false
+  storeName: HMI_CACHE_STORE_NAME
 });
 
 onmessage = async (ev: MessageEvent<MessageType>) => {
   const { fileList } = ev.data;
-  await hmiCache.clear();
+  await store.clear();
   const map = new Map<number, string[]>();
   const SAVE_SIZE = 100;
   await parseFileInChunks({
@@ -35,7 +34,7 @@ onmessage = async (ev: MessageEvent<MessageType>) => {
       } else {
         map.set(key, [row]);
         if (map.size >= SAVE_SIZE) {
-          await hmiCache.setMany([...map.entries()]);
+          await store.set([...map.entries()]);
           map.clear();
         }
       }
@@ -43,8 +42,9 @@ onmessage = async (ev: MessageEvent<MessageType>) => {
   });
 
   if (map.size) {
-    await hmiCache.setMany([...map.entries()]);
+    await store.set([...map.entries()]);
     map.clear();
   }
+  store.close();
   postMessage({ type: "end" });
 };
