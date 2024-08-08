@@ -43,26 +43,23 @@ const ReplayView = () => {
     [searchParams, filesLength]
   );
 
-  const fetchZIP = useCallback(
-    async (url: string) => {
-      try {
-        const res = await fetch(url);
-        const blob = await res.blob();
-        const zip = await JSZip.loadAsync(blob);
-        const hmiFiles: Promise<string>[] = [];
-        zip.forEach((path, file) => {
-          if (path.endsWith(".hmi")) {
-            hmiFiles.push(file.async("string"));
-          }
-        });
-        const files = await Promise.all(hmiFiles);
-        return files;
-      } catch (error) {
-        return Promise.reject(error);
-      }
-    },
-    [messageApi]
-  );
+  const fetchZIP = useCallback(async (url: string) => {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const zip = await JSZip.loadAsync(blob);
+      const hmiFiles: Promise<string>[] = [];
+      zip.forEach((path, file) => {
+        if (path.endsWith(".hmi")) {
+          hmiFiles.push(file.async("string"));
+        }
+      });
+      const files = await Promise.all(hmiFiles);
+      return files;
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }, []);
 
   useEffect(() => {
     // SSE 平台
@@ -118,13 +115,38 @@ const ReplayView = () => {
     player.current?.init(files);
   }, []);
 
+  const onStateChange = useCallback(
+    (state: "play" | "pause") => {
+      if (state === "play") {
+        player.current?.play();
+      } else {
+        player.current?.pause();
+      }
+    },
+    [player.current]
+  );
+
+  const onSeek = useCallback(
+    (timestamp: number) => {
+      player.current?.play(timestamp);
+    },
+    [player.current]
+  );
+
   return (
     <>
       {contextHolder}
       {renderView ? (
         <div className={classNames(styles["replay-view"])}>
           <div className={classNames(styles["controler-wrapper"])}>
-            <Controler duration={duration} currentTime={currentTime} />
+            <Controler
+              state={player.current?.state === "play" ? "play" : "pause"}
+              startTime={duration.startTime}
+              endTime={duration.endTime}
+              currentTime={currentTime}
+              onStateChange={onStateChange}
+              onSeek={onSeek}
+            />
           </div>
           <MainView onLoaded={onLoaded} />
         </div>

@@ -8,6 +8,7 @@ export class HMIPlayer extends EventEmitter {
 
   startTime?: number;
   endTime?: number;
+  currentTime?: number;
 
   state: "init" | "loading" | "play" | "pause" = "init";
 
@@ -53,7 +54,7 @@ export class HMIPlayer extends EventEmitter {
     });
   }
 
-  play(timestamp = this.startTime) {
+  play(timestamp = this.currentTime) {
     if (!this.duration) {
       this.state = "loading";
     } else {
@@ -65,17 +66,26 @@ export class HMIPlayer extends EventEmitter {
     }
   }
 
+  pause() {
+    this.state = "pause";
+    this.playWorker.postMessage({
+      type: "pause"
+    });
+  }
+
   onMessage = (ev: MessageEvent) => {
     const { type, data } = ev.data;
 
     switch (type) {
       case "data":
         renderEmitter.emit(data.data.topic, data.data);
+        this.currentTime = data.currentTime;
         this.emit("currentTime", data.currentTime);
         break;
       case "duration":
         this.startTime = data.startTime;
         this.endTime = data.endTime;
+        this.currentTime = data.startTime;
         this.emit("duration", data);
         if (this.state === "loading") this.play();
         break;
@@ -86,5 +96,6 @@ export class HMIPlayer extends EventEmitter {
     this.setWorker?.terminate();
     this.setWorker = null;
     this.playWorker.terminate();
+    this.removeAllListeners();
   }
 }

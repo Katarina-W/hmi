@@ -100,29 +100,22 @@ class IndexedDBStore {
     return new Promise<void>((resolve, reject) => {
       const transaction = this.#db!.transaction([this.#storeName], "readwrite");
       const store = transaction.objectStore(this.#storeName);
+
+      let request: IDBRequest<IDBValidKey> | null = null;
+
+      transaction.oncomplete = () => {
+        resolve();
+      };
+
+      transaction.onerror = () => {
+        reject(request?.error);
+      };
       if (value) {
-        const request = store.put(value, keys as IDBValidKey);
-
-        transaction.oncomplete = () => {
-          resolve();
-        };
-
-        transaction.onerror = () => {
-          reject(request.error);
-        };
+        request = store.put(value, keys as IDBValidKey);
       } else {
         keys = keys as [IDBValidKey, unknown][];
-
         keys.forEach(([key, value]) => {
-          const request = store.put(value, key);
-
-          transaction.oncomplete = () => {
-            resolve();
-          };
-
-          transaction.onerror = () => {
-            reject(request.error);
-          };
+          request = store.put(value, key);
         });
       }
     });
@@ -135,28 +128,22 @@ class IndexedDBStore {
       const transaction = this.#db!.transaction([this.#storeName], "readwrite");
       const store = transaction.objectStore(this.#storeName);
 
+      let request: IDBRequest<undefined> | null = null;
+
+      transaction.oncomplete = () => {
+        resolve();
+      };
+
+      transaction.onerror = () => {
+        reject(request?.error);
+      };
+
       if (Array.isArray(keys)) {
         keys.forEach((key) => {
-          const request = store.delete(key);
-
-          transaction.oncomplete = () => {
-            resolve();
-          };
-
-          transaction.onerror = () => {
-            reject(request.error);
-          };
+          request = store.delete(key);
         });
       } else {
-        const request = store.delete(keys);
-
-        transaction.oncomplete = () => {
-          resolve();
-        };
-
-        transaction.onerror = () => {
-          reject(request.error);
-        };
+        request = store.delete(keys);
       }
     });
   }

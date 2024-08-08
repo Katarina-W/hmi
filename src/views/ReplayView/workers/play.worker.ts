@@ -28,7 +28,7 @@ const store = createStore({
   storeName: HMI_CACHE_STORE_NAME
 });
 
-const MIN_BUFFER_SIZE = 100;
+const MIN_BUFFER_SIZE = HZ * 2;
 const bufferMap = new Map<number, string[] | undefined>();
 let getKeys: number[] = [];
 let isGetting = false;
@@ -138,14 +138,21 @@ const play = () => {
 };
 
 const start = (timestamp: number) => {
-  currentTime = timestamp;
-  currentKey = getKeyByTime(currentTime);
-  bufferLastKey = currentKey - 1;
+  pause();
+  if (currentTime !== timestamp) {
+    bufferMap.clear();
+    currentTime = timestamp;
+    currentKey = getKeyByTime(currentTime);
+    bufferLastKey = currentKey - 1;
+
+    isGetting = false;
+  }
   play();
 };
 
 const pause = () => {
   clearInterval(playTimer);
+  isWaiting = false;
 };
 
 onmessage = (ev: MessageEvent<MessageType>) => {
