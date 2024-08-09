@@ -115,7 +115,7 @@ export default class Virtual extends RenderScene {
 
     if (this.carRender.car) this.carRender.update(data.data);
 
-    this.pos.set(position.x, position.y, Math.max(position.z, 0));
+    this.pos.set(position.x, position.y, 0);
     this.euler.set(rotation.x, rotation.y, rotation.z);
 
     // 更新地面的位置和旋转

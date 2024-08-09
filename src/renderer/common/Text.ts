@@ -85,8 +85,8 @@ export default abstract class Text extends RenderObject {
       } else {
         const newModel = this.createModel(modelData);
         this.setModelAttributes(newModel, modelData);
-        this.scene.add(newModel);
         this.modelList.set(id, newModel);
+        this.scene.add(newModel);
       }
     });
 

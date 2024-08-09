@@ -120,8 +120,8 @@ export default abstract class Obstacle extends RenderObject {
         const newModel = this.createModel(modelData);
         if (newModel) {
           this.setModelAttributes(newModel, modelData);
-          this.scene.add(newModel);
           this.modelList.set(id, newModel);
+          this.scene.add(newModel);
         }
       }
     });

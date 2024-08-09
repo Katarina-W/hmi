@@ -10,7 +10,7 @@ import {
   type Vector2Like
 } from "three";
 
-import type { Point2, UpdateDataTool } from "../typings";
+import type { UpdateDataTool } from "../typings";
 import RenderObject from "../utils/RenderObject";
 import Text from "./Text";
 
@@ -88,8 +88,8 @@ export default abstract class Polygon extends RenderObject {
       } else {
         const newModel = this.createModel(modelData);
         this.setModelAttributes(newModel, modelData);
-        this.scene.add(newModel);
         this.modelList.set(id, newModel);
+        this.scene.add(newModel);
       }
     });
     this.checkModelByData(data.data);
@@ -98,7 +98,7 @@ export default abstract class Polygon extends RenderObject {
 
 const polygonOffsetZ = 0.1;
 
-function createGeometry(contour: Point2[], height: number) {
+function createGeometry(contour: Vector2Like[], height: number) {
   // 检查顶点顺序是否为顺时针，顺时针则需要倒置
   const isClockWise = ShapeUtils.isClockWise(contour);
   if (isClockWise) contour.reverse();
@@ -174,7 +174,7 @@ function createGeometry(contour: Point2[], height: number) {
   return geometry;
 }
 
-function getPolygonPosition(contour: Point2[]) {
+function getPolygonPosition(contour: Vector2Like[]) {
   let positionX = 0,
     positionY = 0;
 

@@ -7,7 +7,7 @@ import {
   SkinnedMesh,
   type Vector3Like
 } from "three";
-import { clone } from "three/examples/jsm/utils/SkeletonUtils";
+import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 
 import {
   Animal,

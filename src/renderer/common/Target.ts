@@ -31,7 +31,9 @@ export interface UpdateData extends UpdateDataTool<DataType[]> {
   type: "target";
 }
 
-const boxMaterial = new MeshLambertMaterial();
+const boxMaterial = new MeshLambertMaterial({
+  transparent: true
+});
 const boxGeometry = new BoxGeometry(1, 1, 1);
 const boxMesh = new Mesh(boxGeometry, boxMaterial);
 
@@ -46,7 +48,6 @@ export default abstract class Target extends RenderObject {
     const { color, type } = modelData;
     const group = new Group();
     const boxMeshMaterial = boxMaterial.clone();
-    boxMeshMaterial.transparent = true;
     boxMeshMaterial.opacity = !type ? 0.8 : 0.15;
     boxMeshMaterial.color.setRGB(color.r, color.g, color.b);
 
@@ -70,7 +71,7 @@ export default abstract class Target extends RenderObject {
   }
 
   setModelAttributes(model: Object3D, modelData: DataType) {
-    const { yaw, x, y, length, width, height, color } = modelData;
+    const { yaw, x, y, length, width, height, color, type } = modelData;
     const group = model as Group;
     group.rotation.z = yaw;
     group.position.set(x, y, height / 2);
@@ -79,6 +80,7 @@ export default abstract class Target extends RenderObject {
     const boxMeshNew = group.getObjectByName("box");
     if (boxMeshNew instanceof Mesh) {
       boxMeshNew.scale.set(length, width, height);
+      boxMeshNew.material.opacity = !type ? 0.8 : 0.15;
       boxMeshNew.material.color.setRGB(color.r, color.g, color.b);
     }
     const edgesMeshNew = group.getObjectByName("edges");
@@ -105,8 +107,8 @@ export default abstract class Target extends RenderObject {
       } else {
         const newModel = this.createModel(modelData);
         this.setModelAttributes(newModel, modelData);
-        this.scene.add(newModel);
         this.modelList.set(id, newModel);
+        this.scene.add(newModel);
       }
     });
     this.checkModelByData(data.data);
